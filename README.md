@@ -19,7 +19,11 @@ docker compose up --build -d
 
 ## Windows WebUI
 
-Install Python 3.11 64-bit, then run:
+Download the ready-to-run Windows package from the
+[v1.0.0 release](https://github.com/ziazia919/gympulse-engine/releases/tag/v1.0.0).
+Extract the ZIP and double-click `GymPulseWebUI.exe`.
+
+To build it yourself, install Python 3.11 64-bit, then run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build_exe.ps1
