@@ -1,0 +1,7 @@
+# Build-time requirements for the PC where you create the exe.
+# Use Python 3.11 64-bit.
+numpy==1.26.4
+pandas==3.0.3
+mindspore==2.9.0
+Flask==3.1.2
+pyinstaller==6.20.0

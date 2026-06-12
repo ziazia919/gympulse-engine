@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GymPulse Dispatch Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071019;
+      --panel: #0d1a26;
+      --panel-2: #122333;
+      --line: #24394a;
+      --text: #edf7ff;
+      --muted: #8fa8ba;
+      --cyan: #24d4c3;
+      --green: #65e58d;
+      --red: #ff6b75;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 5%, rgba(36, 212, 195, .13), transparent 28rem),
+        linear-gradient(145deg, #071019, #09141e 48%, #060d14);
+      color: var(--text);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .shell { width: min(1500px, 94vw); margin: 0 auto; padding: 34px 0 50px; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    .eyebrow { color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    h1 { margin: 5px 0 0; font-size: clamp(28px, 4vw, 48px); letter-spacing: -.04em; }
+    .status { display: flex; align-items: center; gap: 9px; color: var(--muted); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px var(--green); }
+    .toolbar, .stats, .table-wrap {
+      border: 1px solid var(--line);
+      background: rgba(13, 26, 38, .88);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .22);
+    }
+    .toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+      padding: 16px; border-radius: 16px; margin-bottom: 16px;
+    }
+    button, .upload {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+      background: var(--panel-2); color: var(--text); font: inherit; font-weight: 700;
+      cursor: pointer; transition: .18s ease;
+    }
+    button:hover, .upload:hover { border-color: var(--cyan); transform: translateY(-1px); }
+    button.primary { background: var(--cyan); border-color: var(--cyan); color: #03221f; }
+    button:disabled { opacity: .5; cursor: wait; transform: none; }
+    input[type=file] { display: none; }
+    #filename { color: var(--muted); margin-right: auto; }
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden;
+      border-radius: 16px; margin-bottom: 16px;
+    }
+    .stat { padding: 18px 22px; border-right: 1px solid var(--line); }
+    .stat:last-child { border: 0; }
+    .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+    .stat-value { margin-top: 2px; font-size: 28px; font-weight: 800; }
+    .approved { color: var(--green); }
+    .rejected { color: var(--red); }
+    .table-wrap { border-radius: 16px; overflow: hidden; }
+    .table-head { display: flex; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+    .table-scroll { overflow: auto; max-height: 65vh; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid rgba(36, 57, 74, .65); }
+    th { position: sticky; top: 0; background: #0d1a26; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    tr:hover td { background: rgba(36, 212, 195, .035); }
+    .badge { display: inline-flex; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 900; letter-spacing: .05em; }
+    .badge.approved { background: rgba(101, 229, 141, .1); }
+    .badge.rejected { background: rgba(255, 107, 117, .1); }
+    .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+    #error { display: none; margin-bottom: 16px; padding: 12px 15px; border: 1px solid rgba(255,107,117,.45); border-radius: 10px; color: #ffb4ba; background: rgba(255,107,117,.08); }
+    @media (max-width: 720px) {
+      header { align-items: start; flex-direction: column; }
+      .stats { grid-template-columns: 1fr; }
+      .stat { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Neural Operations Center</div>
+        <h1>GymPulse Dispatch Console</h1>
+      </div>
+      <div class="status"><span class="dot"></span> MindSpore CPU engine online</div>
+    </header>
+
+    <section class="toolbar">
+      <button class="primary" id="runDefault">Run bundled data</button>
+      <label class="upload">Choose CSV<input id="csvFile" type="file" accept=".csv,text/csv"></label>
+      <span id="filename">No custom file selected</span>
+      <button id="downloadJson" disabled>Download JSON</button>
+      <button id="downloadCsv" disabled>Download CSV</button>
+    </section>
+
+    <div id="error"></div>
+
+    <section class="stats">
+      <div class="stat"><div class="stat-label">Profiles</div><div class="stat-value" id="total">0</div></div>
+      <div class="stat"><div class="stat-label">Approved</div><div class="stat-value approved" id="approved">0</div></div>
+      <div class="stat"><div class="stat-label">Rejected</div><div class="stat-value rejected" id="rejected">0</div></div>
+    </section>
+
+    <section class="table-wrap">
+      <div class="table-head"><strong>Dispatch results</strong><span id="source">Waiting for inference</span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Engineer</th><th>Base office</th><th>Location</th><th>Status</th><th>Confidence</th><th>Authority</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="6" class="empty">Run the bundled data or upload a CSV to begin.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let predictions = [];
+    const $ = (id) => document.getElementById(id);
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    async function run(file) {
+      $("error").style.display = "none";
+      $("runDefault").disabled = true;
+      $("runDefault").textContent = "Running inference...";
+      try {
+        const options = file ? { method: "POST", body: (() => { const form = new FormData(); form.append("file", file); return form; })() } : {};
+        const response = await fetch("/api/predictions", options);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Prediction request failed.");
+        predictions = data.predictions;
+        render(data);
+      } catch (error) {
+        $("error").textContent = error.message;
+        $("error").style.display = "block";
+      } finally {
+        $("runDefault").disabled = false;
+        $("runDefault").textContent = "Run bundled data";
+      }
+    }
+
+    function render(data) {
+      const approved = predictions.filter(row => row.status === "APPROVED").length;
+      $("total").textContent = predictions.length;
+      $("approved").textContent = approved;
+      $("rejected").textContent = predictions.length - approved;
+      $("source").textContent = `${data.source} · ${data.count} profiles`;
+      $("downloadJson").disabled = false;
+      $("downloadCsv").disabled = false;
+      $("rows").innerHTML = predictions.map(row => `
+        <tr>
+          <td><strong>${escapeHtml(row.engineer_name)}</strong><br><small>${escapeHtml(row.engineer_id)}</small></td>
+          <td>${escapeHtml(row.base_office)}</td>
+          <td>${escapeHtml(row.location)}</td>
+          <td><span class="badge ${row.status.toLowerCase()}">${escapeHtml(row.status)}</span></td>
+          <td>${escapeHtml(row.confidence)}</td>
+          <td>${escapeHtml(row.signoff_authority)}</td>
+        </tr>`).join("");
+    }
+
+    function download(content, type, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([content], { type }));
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    $("runDefault").addEventListener("click", () => run());
+    $("csvFile").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (file) { $("filename").textContent = file.name; run(file); }
+    });
+    $("downloadJson").addEventListener("click", () => download(JSON.stringify(predictions, null, 2), "application/json", "predictions_output.json"));
+    $("downloadCsv").addEventListener("click", () => {
+      const fields = Object.keys(predictions[0] || {});
+      const quote = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
+      const csv = [fields.join(","), ...predictions.map(row => fields.map(field => quote(row[field])).join(","))].join("\r\n");
+      download(csv, "text/csv;charset=utf-8", "predictions_output.csv");
+    });
+  </script>
+</body>
+</html>

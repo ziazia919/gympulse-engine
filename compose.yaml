@@ -1,0 +1,12 @@
+services:
+  gympulse:
+    build: .
+    image: gympulse-engine
+    container_name: gympulse-engine
+    ports:
+      - "8080:8080"
+    environment:
+      GYMPULSE_CSV: /data/field_dispatch_dataa.csv
+    volumes:
+      - ./field_dispatch_dataa.csv:/data/field_dispatch_dataa.csv:ro
+    restart: unless-stopped

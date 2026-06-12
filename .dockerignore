@@ -1,0 +1,11 @@
+.git
+.venv*
+build
+dist
+docker-output
+output
+reference_only
+__pycache__
+*.py[cod]
+predictions_output.json
+predictions_output.csv
